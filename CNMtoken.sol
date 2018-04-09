@@ -43,14 +43,12 @@ contract TokenERC20 {
      * Initializes contract with initial supply tokens to the creator of the contract
      */
     function TokenERC20(
-        uint256 initialSupply,
-        string tokenName,
-        string tokenSymbol
+        uint256 initialSupply
     ) public {
         totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
         balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
-        name = CinemaToken;                                   // Set the name for display purposes
-        symbol = CNM;                               // Set the symbol for display purposes
+        name = "CinemaToken";                                   // Set the name for display purposes
+        symbol = "CNM";                               // Set the symbol for display purposes
     }
 
     /**
@@ -177,6 +175,7 @@ contract MyAdvancedToken is owned, TokenERC20 {
 
     uint256 public sellPrice;
     uint256 public buyPrice;
+    bool buysellAllowed;
 
     mapping (address => bool) public frozenAccount;
 
@@ -185,10 +184,8 @@ contract MyAdvancedToken is owned, TokenERC20 {
 
     /* Initializes contract with initial supply tokens to the creator of the contract */
     function MyAdvancedToken(
-        uint256 initialSupply,
-        string tokenName,
-        string tokenSymbol
-    ) TokenERC20(initialSupply, tokenName, tokenSymbol) public {}
+        uint256 initialSupply
+    ) TokenERC20(initialSupply) public {buysellAllowed = false;}
 
     /* Internal transfer, only can be called by this contract */
     function _transfer(address _from, address _to, uint _value) internal {
