@@ -225,8 +225,15 @@ contract MyAdvancedToken is owned, TokenERC20 {
         buyPrice = newBuyPrice;
     }
 
+    // @notice Set allowance for token buying and selling transactions
+    // @param allow either allow it or not
+    function setBuySellAllowance(bool allow) onlyOwner public {
+        buysellAllowed = allow;
+    }
+    
     /// @notice Buy tokens from contract by sending ether
     function buy() payable public {
+        require(buysellAllowed);
         uint amount = msg.value / buyPrice;               // calculates the amount
         _transfer(this, msg.sender, amount);              // makes the transfers
     }
@@ -234,6 +241,7 @@ contract MyAdvancedToken is owned, TokenERC20 {
     /// @notice Sell `amount` tokens to contract
     /// @param amount amount of tokens to be sold
     function sell(uint256 amount) public {
+        require(buysellAllowed);
         require(this.balance >= amount * sellPrice);      // checks if the contract has enough ether to buy
         _transfer(msg.sender, this, amount);              // makes the transfers
         msg.sender.transfer(amount * sellPrice);          // sends ether to the seller. It's important to do this last to avoid recursion attacks
