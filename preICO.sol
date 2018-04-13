@@ -1,5 +1,4 @@
-
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.21;
 
 interface token {
     function transfer(address receiver, uint amount);
@@ -49,7 +48,7 @@ contract Crowdsale {
         balanceOf[msg.sender] += amount;
         amountRaised += amount;
         tokenReward.transfer(msg.sender, amount / price);
-        FundTransfer(msg.sender, amount, true);
+        emit FundTransfer(msg.sender, amount, true);
     }
 
     modifier afterDeadline() { if (now >= deadline) _; }
@@ -62,7 +61,7 @@ contract Crowdsale {
     function checkGoalReached() afterDeadline {
         if (amountRaised >= fundingGoal){
             fundingGoalReached = true;
-            GoalReached(beneficiary, amountRaised);
+            emit GoalReached(beneficiary, amountRaised);
         }
         crowdsaleClosed = true;
     }
@@ -81,7 +80,7 @@ contract Crowdsale {
             balanceOf[msg.sender] = 0;
             if (amount > 0) {
                 if (msg.sender.send(amount)) {
-                    FundTransfer(msg.sender, amount, false);
+                    emit FundTransfer(msg.sender, amount, false);
                 } else {
                     balanceOf[msg.sender] = amount;
                 }
@@ -90,7 +89,7 @@ contract Crowdsale {
 
         if (fundingGoalReached && beneficiary == msg.sender) {
             if (beneficiary.send(amountRaised)) {
-                FundTransfer(beneficiary, amountRaised, false);
+                emit FundTransfer(beneficiary, amountRaised, false);
             } else {
                 //If we fail to send the funds to beneficiary, unlock funders balance
                 fundingGoalReached = false;
