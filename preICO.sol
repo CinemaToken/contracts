@@ -1,5 +1,22 @@
 pragma solidity ^0.4.21;
 
+contract owned {
+    address public owner;
+
+    function owned() public {
+        owner = msg.sender;
+    }
+
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
+    }
+
+    function transferOwnership(address newOwner) onlyOwner public {
+        owner = newOwner;
+    }
+}
+
 interface token {
     function transfer(address receiver, uint amount);
 }
@@ -8,11 +25,14 @@ contract Crowdsale {
     address public beneficiary;
     uint public fundingGoal;
     uint public amountRaised;
-    uint public deadline;
-    uint public price;
+    uint public deadlineOfStage;
+    uint public priceStage1;
+    uint public priceStage2;
     token public tokenReward;
     mapping(address => uint256) public balanceOf;
     bool fundingGoalReached = false;
+    bool stage1End = false;
+    bool stage2End = false;
     bool crowdsaleClosed = false;
 
     event GoalReached(address recipient, uint totalAmountRaised);
@@ -27,13 +47,15 @@ contract Crowdsale {
         address ifSuccessfulSendTo,
         uint fundingGoalInEthers,
         uint durationInMinutes,
-        uint etherCostOfEachToken,
+        uint tokenCostInEthStg1,
+        uint tokenCostInEthStg2,
         address addressOfTokenUsedAsReward
     ) {
         beneficiary = ifSuccessfulSendTo;
         fundingGoal = fundingGoalInEthers * 1 ether;
-        deadline = now + durationInMinutes * 1 minutes;
-        price = etherCostOfEachToken * 1 ether;
+        deadlineOfStage = now + durationInMinutes * 1 minutes;
+        priceStage1 = tokenCostInEthStg1 * 1 ether;
+        priceStage2 = tokenCostInEthStg2 * 1 ether;
         tokenReward = token(addressOfTokenUsedAsReward);
     }
 
@@ -44,11 +66,23 @@ contract Crowdsale {
      */
     function () payable {
         require(!crowdsaleClosed);
+        require(!stage1End || !stage2End);
+        if(!stage1End)
+        {
         uint amount = msg.value;
         balanceOf[msg.sender] += amount;
         amountRaised += amount;
-        tokenReward.transfer(msg.sender, amount / price);
+        tokenReward.transfer(msg.sender, amount / priceStage1);
         emit FundTransfer(msg.sender, amount, true);
+        }
+        else
+        {
+        uint amount = msg.value;
+        balanceOf[msg.sender] += amount;
+        amountRaised += amount;
+        tokenReward.transfer(msg.sender, amount / priceStage2);
+        emit FundTransfer(msg.sender, amount, true);
+        }
     }
 
     modifier afterDeadline() { if (now >= deadline) _; }
