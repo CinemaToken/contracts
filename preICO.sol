@@ -21,15 +21,16 @@ interface token {
     function transfer(address receiver, uint amount);
 }
 
-contract Crowdsale {
+contract Crowdsale is owned {
     address public beneficiary;
     uint public fundingGoal;
     uint public amountRaised;
-    uint public deadlineOfStage;
+    uint public durationOfStage;
     uint public priceStage1;
     uint public priceStage2;
     token public tokenReward;
     mapping(address => uint256) public balanceOf;
+    uint deadlineOfStage;
     bool fundingGoalReached = false;
     bool stage1End = false;
     bool stage2End = false;
@@ -53,10 +54,11 @@ contract Crowdsale {
     ) {
         beneficiary = ifSuccessfulSendTo;
         fundingGoal = fundingGoalInEthers * 1 ether;
-        deadlineOfStage = now + durationInMinutes * 1 minutes;
+        durationOfStage = durationInMinutes * 1 minutes;
         priceStage1 = tokenCostInEthStg1 * 1 ether;
         priceStage2 = tokenCostInEthStg2 * 1 ether;
         tokenReward = token(addressOfTokenUsedAsReward);
+        deadlineOfStage = now + durationInMinutes * 1 minutes;
     }
 
     /**
@@ -83,19 +85,28 @@ contract Crowdsale {
         tokenReward.transfer(msg.sender, amount / priceStage2);
         emit FundTransfer(msg.sender, amount, true);
         }
+        if(amountRaised >= fundingGoal)
+        {
+        fundingGoalReached = true;
+        }
     }
 
-    modifier afterDeadline() { if (now >= deadline) _; }
+    modifier afterDeadline() { if (stage1End && stage2End) _; }
 
     /**
-     * Check if goal was reached
+     * Change stage if deadline reached
      *
-     * Checks if the goal or time limit has been reached and ends the campaign
+     * Checks if the deadline of any stage reached and changes stage, if both reached - crowdsale close
      */
-    function checkGoalReached() afterDeadline {
-        if (amountRaised >= fundingGoal){
-            fundingGoalReached = true;
-            emit GoalReached(beneficiary, amountRaised);
+    function changeStage() onlyOwner {
+        require(!(stage1End && stage2End));
+        if (!stage1End){
+            if(now >= deadlineOfStage)
+            {
+            stage1End = true;
+            deadlineOfStage = now + durationOfStage;
+            }
+        else{}
         }
         crowdsaleClosed = true;
     }
