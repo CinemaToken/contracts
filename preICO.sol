@@ -31,7 +31,6 @@ contract Crowdsale is owned {
     token public tokenReward;
     mapping(address => uint256) public balanceOf;
     uint deadlineOfStage;
-    bool fundingGoalReached = false;
     bool stage1End = false;
     bool stage2End = false;
     bool crowdsaleClosed = false;
@@ -87,11 +86,9 @@ contract Crowdsale is owned {
         }
         if(amountRaised >= fundingGoal)
         {
-        fundingGoalReached = true;
+        crowdsaleClosed = true;
         }
     }
-
-    modifier afterDeadline() { if (stage1End && stage2End) _; }
 
     /**
      * Change stage if deadline reached
@@ -101,45 +98,30 @@ contract Crowdsale is owned {
     function changeStage() onlyOwner {
         require(!(stage1End && stage2End));
         if (!stage1End){
-            if(now >= deadlineOfStage)
-            {
+            if(now >= deadlineOfStage){
             stage1End = true;
             deadlineOfStage = now + durationOfStage;
             }
-        else{}
+            }
+        else {
+        if(now >= deadlineOfStage) stage2End = true;
         }
-        crowdsaleClosed = true;
+        if(stage1End && stage2End) crowdsaleClosed = true;
     }
 
 
     /**
      * Withdraw the funds
      *
-     * Checks to see if goal or time limit has been reached, and if so, and the funding goal was reached,
-     * sends the entire amount to the beneficiary. If goal was not reached, each contributor can withdraw
-     * the amount they contributed.
+     * Checks if crowdsale was closed (hardcap or time limit has been reached) and if so
+     * sends the entire amount to the beneficiary. Contributors can't withdraw the amount
+     * they contributed - preICO does not provide refund.
      */
-    function safeWithdrawal() afterDeadline {
-        if (!fundingGoalReached) {
-            uint amount = balanceOf[msg.sender];
-            balanceOf[msg.sender] = 0;
-            if (amount > 0) {
-                if (msg.sender.send(amount)) {
-                    emit FundTransfer(msg.sender, amount, false);
-                } else {
-                    balanceOf[msg.sender] = amount;
-                }
-            }
-        }
-
-        if (fundingGoalReached && beneficiary == msg.sender) {
+    function withdrawal() {
+        if (crowdsaleClosed && (beneficiary == msg.sender)) {
             if (beneficiary.send(amountRaised)) {
                 emit FundTransfer(beneficiary, amountRaised, false);
-            } else {
-                //If we fail to send the funds to beneficiary, unlock funders balance
-                fundingGoalReached = false;
             }
         }
-    }
 }
 
