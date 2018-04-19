@@ -35,7 +35,7 @@ contract Crowdsale is owned {
     bool stage2End = false;
     bool crowdsaleClosed = false;
 
-    event GoalReached(address recipient, uint totalAmountRaised);
+    event Closed(address recipient, uint totalAmountRaised);
     event FundTransfer(address backer, uint amount, bool isContribution);
 
     /**
@@ -68,9 +68,10 @@ contract Crowdsale is owned {
     function () payable {
         require(!crowdsaleClosed);
         require(!stage1End || !stage2End);
+        uint amount;
         if(!stage1End)
         {
-        uint amount = msg.value;
+        amount = msg.value;
         balanceOf[msg.sender] += amount;
         amountRaised += amount;
         tokenReward.transfer(msg.sender, amount / priceStage1);
@@ -78,7 +79,7 @@ contract Crowdsale is owned {
         }
         else
         {
-        uint amount = msg.value;
+        amount = msg.value;
         balanceOf[msg.sender] += amount;
         amountRaised += amount;
         tokenReward.transfer(msg.sender, amount / priceStage2);
@@ -87,6 +88,7 @@ contract Crowdsale is owned {
         if(amountRaised >= fundingGoal)
         {
         crowdsaleClosed = true;
+        emit Closed(beneficiary, amountRaised);
         }
     }
 
@@ -106,7 +108,10 @@ contract Crowdsale is owned {
         else {
         if(now >= deadlineOfStage) stage2End = true;
         }
-        if(stage1End && stage2End) crowdsaleClosed = true;
+        if(stage1End && stage2End){
+           crowdsaleClosed = true;
+           emit Closed(beneficiary, amountRaised);
+        }
     }
 
 
