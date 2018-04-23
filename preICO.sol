@@ -67,7 +67,6 @@ contract Crowdsale is owned {
      */
     function () payable {
         require(!crowdsaleClosed);
-        require(!stage1End || !stage2End);
         uint amount;
         if(!stage1End)
         {
@@ -98,7 +97,7 @@ contract Crowdsale is owned {
      * Checks if the deadline of any stage reached and changes stage, if both reached - crowdsale close
      */
     function changeStage() onlyOwner {
-        require(!(stage1End && stage2End));
+        require(!crowdsaleClosed);
         if (!stage1End){
             if(now >= deadlineOfStage){
             stage1End = true;
