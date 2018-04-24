@@ -74,7 +74,7 @@ contract CinemaTokenCrowdfunding is Ownable {
     
     // general variables of crowdfunding
     address public fundRecipient;           // creator may be different than recipient
-    address project = 0xdd870fa1b7c4700f2bd7f44238821c26f7392148;    // address where finelly will be transfer collectet 
+    address project = 0xdd870fa1b7c4700f2bd7f44238821c26f7392148;    // address where finelly will be transfer collected 
 ether
     uint256 public minimumToRaise;          // required to reach at least this much, else everyone gets refund
     uint256 public maximumToRaise;          // required to achieve this in order to complete the collection of ether
@@ -133,6 +133,7 @@ ether
     
     modifier notNull (address _address) {
         require(_address != 0x0);
+        _;
     }
     
     // check for a voting
@@ -209,7 +210,6 @@ ether
      */
     function contribute() public payable
     {   
-        checkIfFundingComplete();           // update a state of crowdfunding
         // it allows collecting money only during fundraising
         require (state == State.Fundraising || state == State.Successful);
         
@@ -232,41 +232,27 @@ ether
         
         // call event from transaction means
         LogFundingReceived(msg.sender, msg.value, amountRaised, id);
-    }
-    
-    /**
-     * @dev check to complete the crowdfunding
-     */
-    function checkIfFundingComplete() public returns (string) {
         
-        if (state == State.ExpiredRefund)
-                return 'ExpiredRefund';
-                
         if (amountRaised >= minimumToRaise) {
            if (amountRaised >= maximumToRaise) {
-                state = State.Closed;
                 completeAt = now;
                 // it's need to calculate the payments to the project 
                 totalRaised = amountRaised;
-                return 'Closed';
+                state = State.Closed;
             }
             else if (now > start.add(period)) {
-                state = State.Closed;
                 completeAt = now;
                 totalRaised = amountRaised;
-                return 'Closed';
+                state = State.Closed;
             }
             state = State.Successful;
-            return 'Successful';
         }
         else
             if (now > start.add(period)) {
-                state = State.ExpiredRefund;
                 completeAt = now;
                 timeToStartExpiredRefund = now;
-                return 'ExpiredRefund';
+                state = State.ExpiredRefund;
             }
-        return 'Fundraising';
     }
     
     /**
@@ -303,8 +289,7 @@ ether
      * 
      * @param stage number of the stage that we want to pay
      */
-    function transferToProject (uint256 stage) public onlyOwner isNotVoting {
-        require (state == State.Closed);
+    function transferToProject (uint256 stage) public inState(State.Closed) onlyOwner isNotVoting {
         
         uint amountToTransfer;      // amount of ether to transfer to the project
         
@@ -457,8 +442,9 @@ executed
         if (currentResultFor > currentResultAgainst) {
             // Proposal successful
             proposalPassed = true;
-            state = State.ExpiredRefund;
             isVoting = false;
+            completeAt = now;
+            state = State.ExpiredRefund;
         } else {
             // Proposal failed
             proposalPassed = false;
