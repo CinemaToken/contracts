@@ -32,7 +32,6 @@ contract Crowdsale is owned {
     mapping(address => uint256) public balanceOf;
     uint deadlineOfStage;
     bool stage1End = false;
-    bool stage2End = false;
     bool crowdsaleClosed = false;
 
     event Closed(address recipient, uint totalAmountRaised);
@@ -105,11 +104,10 @@ contract Crowdsale is owned {
             }
             }
         else {
-        if(now >= deadlineOfStage) stage2End = true;
-        }
-        if(stage1End && stage2End){
+        if(now >= deadlineOfStage) {
            crowdsaleClosed = true;
            emit Closed(beneficiary, amountRaised);
+        }
         }
     }
 
