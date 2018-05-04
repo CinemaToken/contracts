@@ -18,7 +18,7 @@ contract owned {
 }
 
 interface token {
-    function transfer(address receiver, uint amount);
+    function transfer(address receiver, uint amount) external;
 }
 
 contract Crowdsale is owned {
@@ -66,20 +66,16 @@ contract Crowdsale is owned {
      */
     function () payable {
         require(!crowdsaleClosed);
-        uint amount;
-        if(!stage1End)
-        {
-        amount = msg.value;
+        uint amount = msg.value;
         balanceOf[msg.sender] += amount;
         amountRaised += amount;
+        if(!stage1End)
+        {
         tokenReward.transfer(msg.sender, amount / priceStage1);
         emit FundTransfer(msg.sender, amount, true);
         }
         else
         {
-        amount = msg.value;
-        balanceOf[msg.sender] += amount;
-        amountRaised += amount;
         tokenReward.transfer(msg.sender, amount / priceStage2);
         emit FundTransfer(msg.sender, amount, true);
         }
