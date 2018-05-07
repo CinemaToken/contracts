@@ -18,7 +18,7 @@ contract owned {
 }
 
 interface token {
-    function transfer(address receiver, uint amount);
+    function transfer(address receiver, uint amount) external;
 }
 
 contract Crowdsale is owned {
@@ -32,7 +32,6 @@ contract Crowdsale is owned {
     mapping(address => uint256) public balanceOf;
     uint deadlineOfStage;
     bool stage1End = false;
-    bool stage2End = false;
     bool crowdsaleClosed = false;
 
     event Closed(address recipient, uint totalAmountRaised);
@@ -67,20 +66,16 @@ contract Crowdsale is owned {
      */
     function () payable {
         require(!crowdsaleClosed);
-        uint amount;
-        if(!stage1End)
-        {
-        amount = msg.value;
+        uint amount = msg.value;
         balanceOf[msg.sender] += amount;
         amountRaised += amount;
+        if(!stage1End)
+        {
         tokenReward.transfer(msg.sender, amount / priceStage1);
         emit FundTransfer(msg.sender, amount, true);
         }
         else
         {
-        amount = msg.value;
-        balanceOf[msg.sender] += amount;
-        amountRaised += amount;
         tokenReward.transfer(msg.sender, amount / priceStage2);
         emit FundTransfer(msg.sender, amount, true);
         }
@@ -105,11 +100,10 @@ contract Crowdsale is owned {
             }
             }
         else {
-        if(now >= deadlineOfStage) stage2End = true;
-        }
-        if(stage1End && stage2End){
+        if(now >= deadlineOfStage) {
            crowdsaleClosed = true;
            emit Closed(beneficiary, amountRaised);
+        }
         }
     }
 
