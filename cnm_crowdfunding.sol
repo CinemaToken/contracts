@@ -238,7 +238,7 @@ ether
         
         //owner.transfer(msg.value);
         //transfer (owner, msg.value);
-        //Transfer (msg.sender, owner, msg.value);
+        Transfer (msg.sender, owner, msg.value);
         amountRaised = amountRaised.add(msg.value);
         
         // call event from transaction means
@@ -290,6 +290,7 @@ ether
             // success to send back ether
             contributions[id].wasGetRefund = true;
             amountRaised = amountRaised.sub(amountToRefund);
+            Transfer (msg.sender, contributions[id].contributor, amountToRefund);
         }
         return true;
     }
@@ -309,6 +310,7 @@ ether
         require (now >= timeStageFinance[stage - 1] && wasStageBePayd[stage - 1] == false);
         amountToTransfer = totalRaised.mul(25).div(100);
         project.transfer (amountToTransfer);            // transfer 25% to project
+        Transfer (msg.sender, project, amountToTransfer);
         amountRaised = amountRaised.sub(amountToTransfer);
         wasStageBePayd[stage - 1] = false;
     }
