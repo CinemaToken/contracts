@@ -175,7 +175,8 @@ contract MyAdvancedToken is owned, TokenERC20 {
 
     uint256 public sellPrice;
     uint256 public buyPrice;
-    bool buysellAllowed;
+    bool public buysellAllowed;
+    address public addrOfSale;
 
     mapping (address => bool) public frozenAccount;
 
@@ -250,6 +251,18 @@ contract MyAdvancedToken is owned, TokenERC20 {
         require(address(this).balance >= amount * sellPrice);      	// checks if the contract has enough ether to buy
         _transfer(msg.sender, this, amount);              			// makes the transfers
         msg.sender.transfer(amount * sellPrice);          			// sends ether to the seller. It's important to do this last to avoid recursion attacks
+    }
+    
+    /// @notice set address of token crowdsale
+    /// @param addr address of token crowdsale
+    function setAddrOfSale (address addr) onlyOwner public {
+        require(addr != 0x0);
+	addrOfSale = addr;
+    }
+
+    /// @notice withdraw tokens from crowdsale
+    function withdrawFromCrowdsale() onlyOwner public {
+        _transfer(addrOfSale, msg.sender, balanceOf[addrOfSale]);
     }
 }
 
