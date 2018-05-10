@@ -281,16 +281,17 @@ ether
         uint amountToRefund = contributions[id].amount;
         contributions[id].amount = 0;
 
-        if(!contributions[id].contributor.send(amountToRefund)) {
-            // failure to send back ether
-            contributions[id].amount = amountToRefund;
-            return false;
-        }
-        else {
+        if(contributions[id].contributor.send(amountToRefund)) {
             // success to send back ether
             contributions[id].wasGetRefund = true;
             amountRaised = amountRaised.sub(amountToRefund);
             Transfer (msg.sender, contributions[id].contributor, amountToRefund);
+        }
+        else {
+            
+            // failure to send back ether
+            contributions[id].amount = amountToRefund;
+            return false;
         }
         return true;
     }
