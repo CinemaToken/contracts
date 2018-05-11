@@ -49,7 +49,7 @@ contract Crowdsale is owned {
         uint tokenCostInEthStg1,
         uint tokenCostInEthStg2,
         address addressOfTokenUsedAsReward
-    ) {
+    ) public {
         beneficiary = ifSuccessfulSendTo;
         fundingGoal = fundingGoalInEthers * 1 ether;
         durationOfStage = durationInMinutes * 1 minutes;
@@ -64,7 +64,7 @@ contract Crowdsale is owned {
      *
      * The function without name is the default function that is called whenever anyone sends funds to a contract
      */
-    function () payable {
+    function () payable public {
         require(!crowdsaleClosed);
         uint amount = msg.value;
         balanceOf[msg.sender] += amount;
@@ -91,7 +91,7 @@ contract Crowdsale is owned {
      *
      * Checks if the deadline of any stage reached and changes stage, if both reached - crowdsale close
      */
-    function changeStage() onlyOwner {
+    function changeStage() onlyOwner public {
         require(!crowdsaleClosed);
         if (!stage1End){
             if(now >= deadlineOfStage){
@@ -115,11 +115,11 @@ contract Crowdsale is owned {
      * sends the entire amount to the beneficiary. Contributors can't withdraw the amount
      * they contributed - preICO does not provide refund.
      */
-    function withdrawal() {
+    function withdrawal() public {
         if (crowdsaleClosed && (beneficiary == msg.sender)) {
             if (beneficiary.send(amountRaised)) {
                 emit FundTransfer(beneficiary, amountRaised, false);
             }
         }
 }
-
+}
