@@ -306,9 +306,13 @@ ether
         
         uint amountToTransfer;      // amount of ether to transfer to the project
         
-        // collected ethers are paid
         require (stage <= timeStageFinance.length);
         require (now >= timeStageFinance[stage - 1] && wasStageBePayd[stage - 1] == false);
+        require (now >= timeStageFinance[stage - 1] && wasStageBePayd[stage - 1] == false);
+        if (stage != 1) {
+            require (wasStageBePayd[stage - 2] == true);    // previos stage must be paid
+        }
+        
         amountToTransfer = totalRaised.mul(25).div(100);
         project.transfer (amountToTransfer);            // transfer 25% to project
         Transfer (msg.sender, project, amountToTransfer);
