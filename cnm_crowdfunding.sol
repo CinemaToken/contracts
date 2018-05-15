@@ -85,9 +85,10 @@ ether
     uint256 public completeAt;              // time to stop collecting ether
     Contribution[] contributions;
     
-    // time after which can transfer the some part of ether
-    uint [] timeStageFinance;
-    bool [] wasStageBePayd;
+    uint [] timeStageFinance;       // time after which can transfer the some part of ether
+    uint [] percentStageFinance;    // percent of the stage
+    bool [] wasStageBePayd;         // was the stage
+     
     /*uint256 timeStageFinance1 = now + 10 * 1 seconds;
     uint256 timeStageFinance2 = now + 60 * 1 seconds;
     uint256 timeStageFinance3 = now + 90 * 1 seconds;
@@ -207,10 +208,12 @@ ether
      * @dev add a time (stage) of payment money to the project
      * 
      * @param time time of payment
+     * @param percent percent of the stage
      */
-    function addTimeStageFinance (uint32 time) public onlyOwner {
+    function addTimeStageFinance (uint32 time, uint percent) public onlyOwner {
         timeStageFinance.push(time);
         wasStageBePayd.push(false);
+        percentStageFinance.push(percent);
     }
 
     /**
@@ -288,7 +291,6 @@ ether
             Transfer (msg.sender, contributions[id].contributor, amountToRefund);
         }
         else {
-            
             // failure to send back ether
             contributions[id].amount = amountToRefund;
             return false;
@@ -306,25 +308,27 @@ ether
         
         uint amountToTransfer;      // amount of ether to transfer to the project
         
+        
         require (stage <= timeStageFinance.length);
-        require (now >= timeStageFinance[stage - 1] && wasStageBePayd[stage - 1] == false);
         require (now >= timeStageFinance[stage - 1] && wasStageBePayd[stage - 1] == false);
         if (stage != 1) {
             require (wasStageBePayd[stage - 2] == true);    // previos stage must be paid
         }
         
-        amountToTransfer = totalRaised.mul(25).div(100);
-        project.transfer (amountToTransfer);            // transfer 25% to project
+        uint percent = percentStageFinance [stage -1];
+        
+        amountToTransfer = totalRaised.mul(percent).div(100);
+        project.transfer (amountToTransfer);                // transfer 25% to project
         Transfer (msg.sender, project, amountToTransfer);
         amountRaised = amountRaised.sub(amountToTransfer);
         wasStageBePayd[stage - 1] = false;
     }
         
-        // @dev creator gets all money that hasn't be claimed
-        function removeContract() public onlyOwner() inState(State.ExpiredRefund) {
-            require (now > timeToStartExpiredRefund.add(periodOfExpiredRefund));
-            selfdestruct(owner);            
-        }
+    // @dev creator gets all money that hasn't be claimed
+    function removeContract() public onlyOwner() inState(State.ExpiredRefund) {
+        require (now > timeToStartExpiredRefund.add(periodOfExpiredRefund));
+        selfdestruct(owner);            
+    }
 
     /**
      * @dev Fallback function
