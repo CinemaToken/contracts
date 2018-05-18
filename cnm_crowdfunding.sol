@@ -68,7 +68,7 @@ library SafeMath {
   }
 }
 
-contract CinemaTokenCrowdfunding is Ownable {
+contract CinemaCrowdfunding is Ownable {
     
     using SafeMath for uint256;
     
@@ -173,7 +173,7 @@ ether
      * param _maximumToRaise hardcap of crowdfunding
      * 1518220800, 30, 5000, 7000, "0xca35b7d915458ef540ade6068dfe2f44e8fa733c"
      */
-    function CinemaTokenCrowdfunding (
+    function CinemaCrowdfunding (
         /*uint startInUnixTime,
         uint durationInDays,
         uint _minimumToRaise,
