@@ -76,8 +76,8 @@ contract CinemaCrowdfunding is Ownable {
     address public fundRecipient;           // creator may be different than recipient
     address project = 0xdd870fa1b7c4700f2bd7f44238821c26f7392148;    // address where finelly will be transfer collected 
 ether
-    uint256 public minimumToRaise;          // required to reach at least this much, else everyone gets refund
-    uint256 public maximumToRaise;          // required to achieve this in order to complete the collection of ether
+    uint256 public softcap;          // required to reach at least this much, else everyone gets refund
+    uint256 public hardcap;          // required to achieve this in order to complete the collection of ether
     uint256 public totalRaised;             // amount of collected ether
     uint256 public amountRaised;            // current contract balance 
     uint256 public start;                   // time to start the crowdfunding
@@ -121,8 +121,8 @@ ether
     // states of the crowdfunding
     enum State {
         Fundraising,        // state of ether collection or before
-        Successful,         // amountRaised was reached a minimumToRaise
-        Closed,             // amountRaised was reached a maximumToRaise
+        Successful,         // amountRaised was reached a softcap
+        Closed,             // amountRaised was reached a hardcap
         ExpiredRefund       // crowdfunding is failured or stopped from voting; payment ether back
     }
     
@@ -169,27 +169,27 @@ ether
      * 
      * param startInUnixTime time of start the crowdfunding
      * param durationInDays duration of the crowdfunding
-     * param _minimumToRaise mimimum collected ether than crowdfunding was successful
-     * param _maximumToRaise hardcap of crowdfunding
+     * param _sopfcap mimimum collected ether than crowdfunding was successful
+     * param _hardcap hardcap of crowdfunding
      * 1518220800, 30, 5000, 7000, "0xca35b7d915458ef540ade6068dfe2f44e8fa733c"
      */
     function CinemaCrowdfunding (
         /*uint startInUnixTime,
         uint durationInDays,
-        uint _minimumToRaise,
-        uint _maximumToRaise,
+        uint _softcap,
+        uint _hardcap,
         address _fundRecipient*/
         ) public payable {
             /*start = startInUnixTime;
             period = durationInDays;
             fundRecipient = _fundRecipient;
-            minimumToRaise = _minimumToRaise;
-            maximumToRaise = _maximumToRaise;*/
+            softcap = _softcap;
+            hardcap = _hardcap;*/
             start = now;
             period = 10 * 1 seconds;
             fundRecipient = 0xca35b7d915458ef540ade6068dfe2f44e8fa733c;
-            minimumToRaise = 50 * 1 ether;
-            maximumToRaise = 2000 * 1 ether;
+            softcap = 50 * 1 ether;
+            hardcap = 2000 * 1 ether;
             
             // add address of project
             contributions.push(
@@ -247,8 +247,8 @@ ether
         // call event from transaction means
         LogFundingReceived(msg.sender, msg.value, amountRaised, id);
         
-        if (amountRaised >= minimumToRaise) {
-           if (amountRaised >= maximumToRaise) {
+        if (amountRaised >= softcap) {
+           if (amountRaised >= hardcap) {
                 completeAt = now;
                 // it's need to calculate the payments to the project 
                 totalRaised = amountRaised;
