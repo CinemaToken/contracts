@@ -281,7 +281,7 @@ ether
             && contributions[id].wasGetRefund == false
             && msg.sender == contributions[id].contributor);    // check authenticity of spender
         
-        uint amountToRefund = contributions[id].amount;
+        uint amountToRefund = contributions[id].amount * percentOfDeposit / 100;
         contributions[id].amount = 0;
 
         if(contributions[id].contributor.send(amountToRefund)) {
@@ -417,10 +417,12 @@ executed
 
         // Create a log of this event
         Voted(supportsProposal, msg.sender, justificationText);
-        
+
         return numberOfVotes;
     }
-
+    
+    uint percentOfDeposit = 100;  // percent of the deposit is returned
+    
     /**
      * Finish vote
      *
@@ -442,6 +444,8 @@ executed
             isVoting = false;
             completeAt = now;
             state = State.ExpiredRefund;
+            percentOfDeposit = amountRaised / totalRaised * 100;
+            
         } else {
             // Proposal failed
             proposalPassed = false;
