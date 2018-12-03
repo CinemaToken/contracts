@@ -74,7 +74,8 @@ contract CinemaCrowdsale is Ownable {
     
     // general variables of crowdsale
     address public fundRecipient;           // creator may be different than recipient
-    address project = 0xdd870fa1b7c4700f2bd7f44238821c26f7392148;    // address where finelly will be transfer collected
+    address constant public project = 0xdd870fa1b7c4700f2bd7f44238821c26f7392148;    // address where finelly will be 
+transfer collected
     address public CinemaToken;
 //ether
     uint256 public softcap;
@@ -136,7 +137,6 @@ contract CinemaCrowdsale is Ownable {
     DividendModels dividendModel;
     uint countInvestors;                // amout of investors at the end of ICO
     
-    
     function setDividentModels (uint _dividendModel) private {
         if (_dividendModel == 1) {
             dividendModel = DividendModels.fixReturn;
@@ -176,7 +176,7 @@ contract CinemaCrowdsale is Ownable {
      * param _hardcap hardcap of crowdsale
      * 1518220800, 30, 5000, 7000, "0xca35b7d915458ef540ade6068dfe2f44e8fa733c"
      */
-    function CinemaCrowdsale (
+    constructor (
         /*uint startInUnixTime,
         uint durationInDays,
         uint _softcap,
@@ -331,11 +331,22 @@ contract CinemaCrowdsale is Ownable {
         wasStageBePayd[stage - 1] = false;
     }
     
+    /**
+     * @dev Fallback function
+     *
+     * The function without name is the default function that is called whenever anyone sends funds to a contract
+     */
+    function () external payable {
+        contribute ();
+    }
+    
     /****************************************************************************************
     *                                   DIVIDENT DISTRIBUTION                               *
     * **************************************************************************************/
     uint durectShotFilmInDays = 365 * 1 days;       // how long will the film be shoting
     uint filmTotalGets;                             // how much the film collected in the rental
+    uint constant percentToPlatform = 5;                     // how much from TotalGets goes to CinemaToken Team
+    // start the divident disctribution and transfer 5% to CinemaToken
     function setStateDivDistribution () public onlyOwner payable {
         require(msg.sender == project);
         require (now > timeStageFinance[0] + durectShotFilmInDays); // film must be finished
@@ -345,6 +356,9 @@ contract CinemaCrowdsale is Ownable {
             timeToStartExpiredRefund = now;
         }
         else {
+            uint partToCinemaToken = filmTotalGets / 100 * percentToPlatform;
+            CinemaToken.transfer(partToCinemaToken);
+            filmTotalGets -= partToCinemaToken;
             state = State.DivDistribution;
         }
     }
@@ -362,12 +376,14 @@ contract CinemaCrowdsale is Ownable {
     }
     
     uint fixMultiplier;
-    function setParamsFixReturn () public inState(State.DivDistribution) onlyOwner {
+    
+    function setParamsFixReturn () public inState(State.DivDistribution) inDivModel(DividendModels.fixReturn) onlyOwner {
         fixMultiplier = 3;
         fixMultiplier = checkFixMultiplier(fixMultiplier);
         
     }
     
+    // function for FIXED RETURN
     function fixReturn(uint256 id) public inState(State.DivDistribution) inDivModel(DividendModels.fixReturn) returns (bool)
     {
         require (id <= contributions.length && id > 0
@@ -393,13 +409,16 @@ contract CinemaCrowdsale is Ownable {
     }
     
     uint perAbove;
-    function setParamsFixReturnPerAbove () public inState(State.DivDistribution) onlyOwner {
+    
+    function setParamsFixReturnPerAbove () public inState(State.DivDistribution) inDivModel(DividendModels.fixReturnPerAbove) 
+onlyOwner {
         fixMultiplier = 3;
         fixMultiplier = checkFixMultiplier(fixMultiplier);
         perAbove = 50;
         
     }
     
+    // function for FIXED RETURN + PERCENTAGE ABOVE
     function fixReturnPerAbove(uint256 id) public inState(State.DivDistribution) inDivModel(DividendModels.fixReturnPerAbove) 
 returns (bool)
     {
@@ -426,6 +445,7 @@ returns (bool)
         return true;
     }
     
+    // function for FULL DIVIDENTS
     function fullDividents(uint256 id) public inState(State.DivDistribution) inDivModel(DividendModels.fullDividents) returns 
 (bool)
     {
@@ -452,6 +472,7 @@ returns (bool)
         return true;
     }
     
+    // function for DIVIDENTS + AUTHORS FEE
     function dividentsAutFee(uint256 id) public inState(State.DivDistribution) inDivModel(DividendModels.dividentsAutFee) 
 returns (bool)
     {
@@ -495,15 +516,6 @@ returns (bool)
         selfdestruct(owner);            
     }
 
-    /**
-     * @dev Fallback function
-     *
-     * The function without name is the default function that is called whenever anyone sends funds to a contract
-     */
-    function () external payable {
-        contribute ();
-    }
-    
     /***************************************************************************************
     *                                  VOTING                                              *
     * *************************************************************************************/
